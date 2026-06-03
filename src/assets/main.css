@@ -1,35 +1,51 @@
-@import './base.css';
+:root {
+  --bg: #f4f7f2;
+  --card: #ffffff;
+  --green: #2e7d32;
+  --green-dark: #1b5e20;
+  --green-soft: #e8f5e9;
+  --orange: #ef6c00;
+  --text: #1f2a1f;
+  --muted: #6b7c6b;
+  --border: #e0e6df;
+  --danger: #c62828;
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
 
 #app {
-  max-width: 1280px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  padding: 1.5rem;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+input,
+select {
+  font-family: inherit;
+  font-size: 1rem;
 }
