@@ -4,6 +4,7 @@ import { computed } from 'vue'
 const props = defineProps({
   product: { type: Object, required: true },
   quantityInCart: { type: Number, default: 0 },
+  availableStock: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['add', 'remove'])
@@ -21,7 +22,6 @@ const daysSinceDelivery = computed(() => {
 const freshnessLabel = computed(() => {
   const d = daysSinceDelivery.value
   if (d <= 1) return 'Świeże dzisiaj'
-  if (d <= 3) return `Dostawa ${d} dni temu`
   return `Dostawa ${d} dni temu`
 })
 
@@ -36,10 +36,19 @@ const formattedDate = computed(() => {
   const date = new Date(props.product.deliveryDate)
   return date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })
 })
+
+const soldOut = computed(() => props.product.stock <= 0)
+const canAddMore = computed(() => props.availableStock > 0)
+
+const stockLabel = computed(() => {
+  if (soldOut.value) return 'Brak na stanie'
+  if (props.product.stock <= 5) return `Ostatnie ${props.product.stock} ${props.product.unit}`
+  return `Na stanie: ${props.product.stock} ${props.product.unit}`
+})
 </script>
 
 <template>
-  <article class="card">
+  <article class="card" :class="{ 'sold-out': soldOut }">
     <div class="emoji">{{ product.emoji }}</div>
 
     <span class="badge" :class="product.type">{{ typeLabel }}</span>
@@ -52,18 +61,25 @@ const formattedDate = computed(() => {
     </div>
     <p class="delivery">Dostawa: {{ formattedDate }}</p>
 
+    <p class="stock" :class="{ low: product.stock <= 5 && !soldOut, out: soldOut }">
+      📦 {{ stockLabel }}
+    </p>
+
     <div class="price-row">
       <span class="price">{{ product.price.toFixed(2) }} zł</span>
       <span class="unit">/ {{ product.unit }}</span>
     </div>
 
-    <div v-if="quantityInCart === 0" class="actions">
+    <div v-if="soldOut" class="actions">
+      <button class="add-btn" disabled>Wyprzedane</button>
+    </div>
+    <div v-else-if="quantityInCart === 0" class="actions">
       <button class="add-btn" @click="emit('add', product)">Dodaj do koszyka</button>
     </div>
     <div v-else class="qty">
       <button class="qty-btn" @click="emit('remove', product)">−</button>
       <span class="qty-value">{{ quantityInCart }}</span>
-      <button class="qty-btn" @click="emit('add', product)">+</button>
+      <button class="qty-btn" :disabled="!canAddMore" @click="emit('add', product)">+</button>
     </div>
   </article>
 </template>
@@ -86,6 +102,14 @@ const formattedDate = computed(() => {
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+.card.sold-out {
+  opacity: 0.65;
+}
+
+.card.sold-out .emoji {
+  filter: grayscale(1);
 }
 
 .emoji {
@@ -161,6 +185,21 @@ const formattedDate = computed(() => {
   margin-top: 0.15rem;
 }
 
+.stock {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  font-weight: 600;
+}
+
+.stock.low {
+  color: var(--orange);
+}
+
+.stock.out {
+  color: var(--danger);
+}
+
 .price-row {
   margin-top: 0.7rem;
   margin-bottom: 0.9rem;
@@ -196,6 +235,11 @@ const formattedDate = computed(() => {
   background: var(--green-dark);
 }
 
+.add-btn:disabled {
+  background: #c8d2c6;
+  cursor: not-allowed;
+}
+
 .qty {
   margin-top: auto;
   display: flex;
@@ -222,6 +266,13 @@ const formattedDate = computed(() => {
 .qty-btn:hover {
   background: var(--green);
   color: #fff;
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #fff;
+  color: var(--muted);
 }
 
 .qty-value {

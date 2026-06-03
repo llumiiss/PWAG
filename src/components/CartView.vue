@@ -1,11 +1,16 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
+import {
+  cartDetailed,
+  cartCount,
+  cartTotal,
+  addToCart,
+  removeFromCart,
+  availableStock,
+  placeOrder,
+} from '../store/shop.js'
 
-const props = defineProps({
-  cart: { type: Array, required: true },
-})
-
-const emit = defineEmits(['add', 'remove', 'clear', 'back'])
+const emit = defineEmits(['back'])
 
 const form = reactive({
   firstName: '',
@@ -22,12 +27,8 @@ const errors = reactive({
 })
 
 const orderPlaced = ref(false)
-
-const total = computed(() =>
-  props.cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-)
-
-const itemCount = computed(() => props.cart.reduce((sum, item) => sum + item.quantity, 0))
+const submitting = ref(false)
+const submitError = ref('')
 
 function validate() {
   errors.firstName = ''
@@ -73,16 +74,30 @@ function validate() {
   return ok
 }
 
-function submitOrder() {
-  if (props.cart.length === 0) return
+async function submitOrder() {
+  if (cartDetailed.value.length === 0) return
   if (!validate()) return
 
-  orderPlaced.value = true
-  emit('clear')
+  submitting.value = true
+  submitError.value = ''
+  try {
+    await placeOrder({
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      phone: form.phone.trim(),
+      address: form.address.trim(),
+    })
+    orderPlaced.value = true
+  } catch (err) {
+    submitError.value = 'Nie udało się złożyć zamówienia: ' + err.message
+  } finally {
+    submitting.value = false
+  }
 }
 
 function newOrder() {
   orderPlaced.value = false
+  submitError.value = ''
   form.firstName = ''
   form.lastName = ''
   form.phone = ''
@@ -100,12 +115,12 @@ function newOrder() {
     <div v-if="orderPlaced" class="confirmation">
       <div class="check">✅</div>
       <h2>Zamówienie przyjęte!</h2>
-      <p>Dziękujemy za zakupy. Skontaktujemy się telefonicznie w sprawie dostawy.</p>
+      <p>Dziękujemy za zakupy. Stan magazynu został zaktualizowany, a my skontaktujemy się telefonicznie w sprawie dostawy.</p>
       <button class="primary-btn" @click="newOrder">Złóż kolejne zamówienie</button>
     </div>
 
     <!-- Pusty koszyk -->
-    <div v-else-if="cart.length === 0" class="empty">
+    <div v-else-if="cartDetailed.length === 0" class="empty">
       <div class="empty-emoji">🧺</div>
       <p>Twój koszyk jest pusty.</p>
       <button class="primary-btn" @click="emit('back')">Przejdź do sklepu</button>
@@ -114,23 +129,29 @@ function newOrder() {
     <!-- Koszyk + formularz -->
     <div v-else class="layout">
       <div class="items">
-        <div v-for="item in cart" :key="item.id" class="item">
+        <div v-for="item in cartDetailed" :key="item.id" class="item">
           <span class="item-emoji">{{ item.emoji }}</span>
           <div class="item-info">
             <strong>{{ item.name }}</strong>
             <span class="item-price">{{ item.price.toFixed(2) }} zł / {{ item.unit }}</span>
           </div>
           <div class="item-qty">
-            <button class="qty-btn" @click="emit('remove', item)">−</button>
+            <button class="qty-btn" @click="removeFromCart(item)">−</button>
             <span>{{ item.quantity }}</span>
-            <button class="qty-btn" @click="emit('add', item)">+</button>
+            <button
+              class="qty-btn"
+              :disabled="availableStock(item.id) <= 0"
+              @click="addToCart(item)"
+            >
+              +
+            </button>
           </div>
-          <span class="item-sum">{{ (item.price * item.quantity).toFixed(2) }} zł</span>
+          <span class="item-sum">{{ item.lineTotal.toFixed(2) }} zł</span>
         </div>
 
         <div class="summary">
-          <span>Razem ({{ itemCount }} szt.)</span>
-          <strong>{{ total.toFixed(2) }} zł</strong>
+          <span>Razem ({{ cartCount }} szt.)</span>
+          <strong>{{ cartTotal.toFixed(2) }} zł</strong>
         </div>
       </div>
 
@@ -185,7 +206,11 @@ function newOrder() {
           <span v-if="errors.address" class="error">{{ errors.address }}</span>
         </div>
 
-        <button type="submit" class="order-btn">Zamów ({{ total.toFixed(2) }} zł)</button>
+        <p v-if="submitError" class="error submit-error">{{ submitError }}</p>
+
+        <button type="submit" class="order-btn" :disabled="submitting">
+          {{ submitting ? 'Składanie zamówienia…' : `Zamów (${cartTotal.toFixed(2)} zł)` }}
+        </button>
       </form>
     </div>
   </section>
@@ -266,6 +291,13 @@ function newOrder() {
 .qty-btn:hover {
   background: var(--green);
   color: #fff;
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--green-soft);
+  color: var(--muted);
 }
 
 .item-sum {
@@ -351,6 +383,15 @@ function newOrder() {
 
 .order-btn:hover {
   background: var(--green-dark);
+}
+
+.order-btn:disabled {
+  background: #c8d2c6;
+  cursor: not-allowed;
+}
+
+.submit-error {
+  margin-bottom: 0.6rem;
 }
 
 .empty,

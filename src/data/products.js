@@ -1,6 +1,6 @@
 // Prosta "baza danych" produktów sklepu.
-// Każdy produkt ma typ (warzywo / owoc) oraz datę dostawy (świeżość),
-// po której można sortować w sklepie.
+// Każdy produkt ma typ (warzywo / owoc), datę dostawy (świeżość)
+// oraz stan magazynowy (stock), który wyczerpuje się przy zamówieniach.
 export const products = [
   {
     id: 1,
@@ -10,6 +10,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍅',
     deliveryDate: '2026-06-03',
+    stock: 40,
   },
   {
     id: 2,
@@ -19,6 +20,7 @@ export const products = [
     unit: 'kg',
     emoji: '🥒',
     deliveryDate: '2026-06-02',
+    stock: 55,
   },
   {
     id: 3,
@@ -28,6 +30,7 @@ export const products = [
     unit: 'kg',
     emoji: '🥕',
     deliveryDate: '2026-05-30',
+    stock: 80,
   },
   {
     id: 4,
@@ -37,6 +40,7 @@ export const products = [
     unit: 'kg',
     emoji: '🥔',
     deliveryDate: '2026-06-01',
+    stock: 120,
   },
   {
     id: 5,
@@ -46,6 +50,7 @@ export const products = [
     unit: 'kg',
     emoji: '🫑',
     deliveryDate: '2026-06-03',
+    stock: 25,
   },
   {
     id: 6,
@@ -55,6 +60,7 @@ export const products = [
     unit: 'szt.',
     emoji: '🥦',
     deliveryDate: '2026-05-29',
+    stock: 18,
   },
   {
     id: 7,
@@ -64,6 +70,7 @@ export const products = [
     unit: 'kg',
     emoji: '🧅',
     deliveryDate: '2026-05-28',
+    stock: 90,
   },
   {
     id: 8,
@@ -73,6 +80,7 @@ export const products = [
     unit: 'szt.',
     emoji: '🥬',
     deliveryDate: '2026-06-02',
+    stock: 12,
   },
   {
     id: 9,
@@ -82,6 +90,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍎',
     deliveryDate: '2026-06-01',
+    stock: 70,
   },
   {
     id: 10,
@@ -91,6 +100,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍌',
     deliveryDate: '2026-05-31',
+    stock: 60,
   },
   {
     id: 11,
@@ -100,6 +110,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍓',
     deliveryDate: '2026-06-03',
+    stock: 15,
   },
   {
     id: 12,
@@ -109,6 +120,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍊',
     deliveryDate: '2026-05-30',
+    stock: 50,
   },
   {
     id: 13,
@@ -118,6 +130,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍇',
     deliveryDate: '2026-06-02',
+    stock: 22,
   },
   {
     id: 14,
@@ -127,6 +140,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍋',
     deliveryDate: '2026-05-29',
+    stock: 35,
   },
   {
     id: 15,
@@ -136,6 +150,7 @@ export const products = [
     unit: 'kg',
     emoji: '🍐',
     deliveryDate: '2026-06-01',
+    stock: 45,
   },
   {
     id: 16,
@@ -145,5 +160,6 @@ export const products = [
     unit: 'kg',
     emoji: '🍉',
     deliveryDate: '2026-06-03',
+    stock: 8,
   },
 ]

@@ -1,33 +1,32 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import ShopView from './components/ShopView.vue'
 import CartView from './components/CartView.vue'
+import AdminView from './components/AdminView.vue'
+import AdminLogin from './components/AdminLogin.vue'
+import { cartCount, state } from './store/shop.js'
 
-const currentView = ref('shop') // shop | cart
-const cart = ref([])
+const currentView = ref('shop') // shop | cart | admin
+const isAdminAuthed = ref(false)
+const showAdminLogin = ref(false)
 
-const cartCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0))
-
-function addToCart(product) {
-  const existing = cart.value.find((i) => i.id === product.id)
-  if (existing) {
-    existing.quantity++
+function openAdmin() {
+  if (isAdminAuthed.value) {
+    currentView.value = 'admin'
   } else {
-    cart.value.push({ ...product, quantity: 1 })
+    showAdminLogin.value = true
   }
 }
 
-function removeFromCart(product) {
-  const existing = cart.value.find((i) => i.id === product.id)
-  if (!existing) return
-  existing.quantity--
-  if (existing.quantity <= 0) {
-    cart.value = cart.value.filter((i) => i.id !== product.id)
-  }
+function onAdminLoginSuccess() {
+  isAdminAuthed.value = true
+  showAdminLogin.value = false
+  currentView.value = 'admin'
 }
 
-function clearCart() {
-  cart.value = []
+function logoutAdmin() {
+  isAdminAuthed.value = false
+  currentView.value = 'shop'
 }
 </script>
 
@@ -48,6 +47,16 @@ function clearCart() {
           Sklep
         </button>
         <button
+          class="nav-link"
+          :class="{ active: currentView === 'admin' }"
+          @click="openAdmin"
+        >
+          ⚙️ Admin
+        </button>
+        <button v-if="isAdminAuthed" class="nav-link logout" @click="logoutAdmin">
+          Wyloguj
+        </button>
+        <button
           class="cart-btn"
           :class="{ active: currentView === 'cart' }"
           @click="currentView = 'cart'"
@@ -58,22 +67,30 @@ function clearCart() {
       </div>
     </nav>
 
+    <div v-if="state.backend === 'local'" class="banner local">
+      ⚠️ Tryb lokalny — Firebase nie jest skonfigurowany, zmiany nie przetrwają odświeżenia.
+      Uzupełnij plik <code>.env</code> wg <code>.env.example</code>.
+    </div>
+
     <main>
-      <ShopView
-        v-if="currentView === 'shop'"
-        :cart="cart"
-        @add="addToCart"
-        @remove="removeFromCart"
-      />
-      <CartView
-        v-else
-        :cart="cart"
-        @add="addToCart"
-        @remove="removeFromCart"
-        @clear="clearCart"
-        @back="currentView = 'shop'"
-      />
+      <div v-if="state.loading" class="status">
+        <span class="spinner"></span> Ładowanie produktów…
+      </div>
+      <div v-else-if="state.error" class="status error">
+        ❌ Błąd połączenia z Firebase: {{ state.error }}
+      </div>
+      <template v-else>
+        <ShopView v-if="currentView === 'shop'" />
+        <AdminView v-else-if="currentView === 'admin' && isAdminAuthed" />
+        <CartView v-else @back="currentView = 'shop'" />
+      </template>
     </main>
+
+    <AdminLogin
+      v-if="showAdminLogin"
+      @success="onAdminLoginSuccess"
+      @close="showAdminLogin = false"
+    />
 
     <footer class="footer">
       <p>🥬 Warzywniak — projekt zaliczeniowy Vue.js · {{ new Date().getFullYear() }}</p>
@@ -135,6 +152,15 @@ function clearCart() {
   color: var(--green-dark);
 }
 
+.nav-link.logout {
+  color: var(--danger);
+}
+
+.nav-link.logout:hover {
+  background: #fdecec;
+  color: var(--danger);
+}
+
 .cart-btn {
   position: relative;
   background: var(--green);
@@ -166,8 +192,57 @@ function clearCart() {
   padding: 0 5px;
 }
 
+.banner {
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.banner.local {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #8d6e00;
+}
+
+.banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.05rem 0.3rem;
+  border-radius: 5px;
+  font-size: 0.82rem;
+}
+
 main {
   flex: 1;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 4rem 1rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--green-soft);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .footer {

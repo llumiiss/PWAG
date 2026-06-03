@@ -1,13 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { products } from '../data/products.js'
 import ProductCard from './ProductCard.vue'
-
-const props = defineProps({
-  cart: { type: Array, required: true },
-})
-
-const emit = defineEmits(['add', 'remove'])
+import { state, addToCart, removeFromCart, quantityInCart, availableStock } from '../store/shop.js'
 
 const search = ref('')
 const activeFilter = ref('all') // all | warzywo | owoc
@@ -19,26 +13,18 @@ const filters = [
   { value: 'owoc', label: 'Owoce', emoji: '🍎' },
 ]
 
-function quantityOf(productId) {
-  const item = props.cart.find((i) => i.id === productId)
-  return item ? item.quantity : 0
-}
-
 const visibleProducts = computed(() => {
-  let list = products.slice()
+  let list = state.products.slice()
 
-  // Filtr typu
   if (activeFilter.value !== 'all') {
     list = list.filter((p) => p.type === activeFilter.value)
   }
 
-  // Wyszukiwarka po nazwie
   const query = search.value.trim().toLowerCase()
   if (query) {
     list = list.filter((p) => p.name.toLowerCase().includes(query))
   }
 
-  // Sortowanie
   if (sortBy.value === 'fresh') {
     list.sort((a, b) => new Date(b.deliveryDate) - new Date(a.deliveryDate))
   } else if (sortBy.value === 'price-asc') {
@@ -97,9 +83,10 @@ const visibleProducts = computed(() => {
         v-for="product in visibleProducts"
         :key="product.id"
         :product="product"
-        :quantity-in-cart="quantityOf(product.id)"
-        @add="emit('add', $event)"
-        @remove="emit('remove', $event)"
+        :quantity-in-cart="quantityInCart(product.id)"
+        :available-stock="availableStock(product.id)"
+        @add="addToCart"
+        @remove="removeFromCart"
       />
     </div>
 
